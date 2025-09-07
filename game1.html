@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mini Jeu 3D Simple</title>
+<style>
+  body { margin: 0; overflow: hidden; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/PointerLockControls.js"></script>
+
+<script>
+let scene, camera, renderer, controls, player;
+
+init();
+animate();
+
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lumière
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(10, 20, 10);
+    scene.add(light);
+
+    // Sol
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    // Joueur
+    const playerGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    player = new THREE.Mesh(playerGeometry, playerMaterial);
+    player.position.y = 1;
+    scene.add(player);
+
+    // Controls
+    controls = new THREE.PointerLockControls(camera, renderer.domElement);
+    controls.getObject().position.set(0, 5, 10);
+    scene.add(controls.getObject());
+
+    document.body.addEventListener('click', () => controls.lock());
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+}
+
+// Déplacements
+let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+function onKeyDown(e){
+    switch(e.code){
+        case "KeyZ": moveForward = true; break;
+        case "KeyS": moveBackward = true; break;
+        case "KeyQ": moveLeft = true; break;
+        case "KeyD": moveRight = true; break;
+    }
+}
+function onKeyUp(e){
+    switch(e.code){
+        case "KeyZ": moveForward = false; break;
+        case "KeyS": moveBackward = false; break;
+        case "KeyQ": moveLeft = false; break;
+        case "KeyD": moveRight = false; break;
+    }
+}
+
+function animate(){
+    requestAnimationFrame(animate);
+
+    const speed = 0.2;
+    if(moveForward) player.position.z -= speed;
+    if(moveBackward) player.position.z += speed;
+    if(moveLeft) player.position.x -= speed;
+    if(moveRight) player.position.x += speed;
+
+    // La caméra suit le joueur
+    controls.getObject().position.x = player.position.x;
+    controls.getObject().position.y = player.position.y + 3;
+    controls.getObject().position.z = player.position.z + 5;
+    camera.lookAt(player.position);
+
+    renderer.render(scene, camera);
+}
+</script>
+</body>
+</html>
